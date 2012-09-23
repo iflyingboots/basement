@@ -30,10 +30,7 @@
           <label for="bio" class="control-label">Bio</label>
           <div class="controls">
             <!-- {{form.bio}} -->
-            <textarea name="bio" id="bio" cols="30" rows="5">
-              {% if user.bio %}
-              {{user.bio}}
-              {% endif %}
+            <textarea name="bio" id="bio" cols="30" rows="5">{% if user.bio %}{{user.bio}}{% endif %}
             </textarea>
           </div>
         </div>
