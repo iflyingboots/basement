@@ -20,6 +20,11 @@ a:hover {
 	color: #000;
 }
 
+p {
+	font-size: 14px;
+	line-height: 20px;
+}
+
 .logo a {
 	font-family: "Helvetica Neue";
 	color: #777;
@@ -27,7 +32,7 @@ a:hover {
 	float: left;
 	text-indent: -9999px;
 	background: url(/static/images/logo.png) no-repeat 0 15px;
-	width: 220px;
+	width: 275px;
 	height: 60px;
 }
 
