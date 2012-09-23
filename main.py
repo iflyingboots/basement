@@ -329,6 +329,9 @@ def timesince(dt, default="just now"):
     """
     now = datetime.now()
     diff = now - dt
+    # if diff > 1 day, return original time format
+    if int(diff.total_seconds()) > 60 * 60 * 24:
+        return dt
     periods = (
         (diff.days / 365, "year", "years"),
         (diff.days / 30, "month", "months"),
