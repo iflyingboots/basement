@@ -18,9 +18,9 @@
     <body>
     <div class="container">
         <!-- nav -->
-        <div class="row">
+        <div class="row layout">
             <div class="span12" style="vertical-align: bottom;">
-                <h1 class="logo"><a href="/">Basement</a></h1>
+                <h1 class="logo"><a href="/">AirPost</a></h1>
                 <ul class="nav">
                     {% if current_user.is_authenticated() %}
                     <li><a href="/u/{{current_user.username}}">{{current_user.username}}</a></li>

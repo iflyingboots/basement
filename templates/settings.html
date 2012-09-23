@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 
+{% block title%}Settings{% endblock %}
 {% block body %}
 <div class="row settings-view">
   <div class="span8">
-    <div class="bg-white airmail-box" style="position: relative;">
-      <div class="stamp"></div>
+    <div class="bg-white airmail-box">
       <form action="" class="form-horizontal" method="post">
         {{form.csrf_token}}
         <legend>Profile</legend>
@@ -50,10 +50,10 @@
   </div>
   <div class="span4">
     <div class="airmail-box">
-      <legend>Settings</legend>
-      <ul>
-        <li>Change Password</li>
-        <li>Change Photo</li>
+      <h3 class="h3-title">Settings</h3>
+      <ul class="nav nav-tabs nav-stacked">
+        <li><a href="/settings/change_password">Change Password</a></li>
+
       </ul>
     </div>
   </div>
