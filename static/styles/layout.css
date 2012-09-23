@@ -40,7 +40,7 @@ p {
 	background: url(/static/images/logo.png) no-repeat 1px 16px;
 }
 
-.nav {
+.layout .nav {
 	float: right;
 	font-size: 18px;
 	font-weight: bold;
@@ -49,22 +49,22 @@ p {
 	/*background: url(../images/airmail_pattern.png) repeat-x;*/
 }
 
-.nav li {
+.layout .nav li {
 	margin: 2px 5px;
 	display: inline-block;
 }
 
-.nav li a {
+.layout .nav li a {
 	color: #666;
 	text-shadow: #fff 1px 1px 1px;
 	padding: 5px;
 }
 
-.nav li a:active {
+.layout .nav li a:active {
 	color: #333;
 }
 
-.nav li a:hover {
+.layout .nav li a:hover {
 	padding-bottom: 4px;
 	border-bottom: #bbb 1px solid;
 	background: none;
@@ -177,10 +177,12 @@ p {
 }
 
 .h3-title {
-	line-height: 110%;
+	line-height: 36px;
 	margin: 4px 0;
-	padding: 5px;
-	border-bottom: #343 1px solid;
+	padding: 0;
+	font-size: 19px;
+	font-weight: normal;
+	border-bottom: #eee 1px solid;
 }
 
 /* topic view */

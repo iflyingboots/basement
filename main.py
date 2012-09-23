@@ -4,18 +4,24 @@ from datetime import datetime
 import markdown
 import os
 import re
-from flask import (Flask, render_template, request, url_for, flash, redirect,
-    send_from_directory, Markup, abort)
+from util import encrypt_password, get_salt
+from flask import (
+    Flask, render_template, request, url_for, flash, redirect,
+    send_from_directory, Markup, abort
+    )
 from flask.ext.admin import Admin
 from flaskext.cache import Cache
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.wtf import validators, ValidationError
-from flask.ext.wtf import (Form, TextField, PasswordField, TextAreaField,
-    FileField, HiddenField, Required)
+from flask.ext.wtf import (
+    validators, ValidationError, Form, TextField,
+    PasswordField, TextAreaField,
+    FileField, HiddenField, Required, EqualTo
+    )
 from flask.ext.admin.contrib.sqlamodel import ModelView
-from flask.ext.login import (LoginManager, current_user, login_required,
- login_user, logout_user, UserMixin, AnonymousUser, confirm_login, 
- fresh_login_required)
+from flask.ext.login import (
+    LoginManager, current_user, login_required, login_user, logout_user, 
+    UserMixin, AnonymousUser, confirm_login, fresh_login_required
+    )
 from flask.ext.gravatar import Gravatar
 from jinja2 import evalcontextfilter, Markup, escape
 
@@ -57,6 +63,7 @@ class Users(db.Model, UserMixin):
     username = db.Column(db.Unicode(45), unique=True)
     nickname = db.Column(db.Unicode(45))
     email = db.Column(db.Unicode(45))
+    salt = db.Column(db.Unicode(8))
     password = db.Column(db.Unicode(100))
     ctime = db.Column(db.DateTime)
     active = db.Column(db.Integer, default=1)
@@ -139,7 +146,15 @@ class SettingsForm(Form):
     email = TextField(u'Email', validators=[Required()])
     bio = TextAreaField(u'Bio')
     photo = FileField(u'Photo',
-        validators = [validators.regexp(ur'^[^/\\]\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$')]
+        validators = [validators.regexp(
+            ur'^[^/\\]\.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF)$'
+            )])
+
+class ChangePasswordForm(Form):
+    old_password = PasswordField(u'Old Password', validators=[Required()])
+    new_password = PasswordField(u'New Password', validators=[Required()])
+    confirm = PasswordField(u'Repeat Password', validators=[
+        Required(), EqualTo('new_password', message='Passwords must match')]
         )
 
 # views
@@ -151,7 +166,8 @@ def signup():
         user.username = request.form['username']
         user.nickname = request.form['username']
         user.email = request.form['email']
-        user.password = encode_password(request.form['password'])
+        user.salt = get_salt()
+        user.password = encrypt_password(request.form['password'])
         user.ctime = datetime.now()
         db.session.add(user)
         db.session.commit()
@@ -163,7 +179,7 @@ def login():
     if form.validate_on_submit():
         username = request.form['username']
         user = Users.query.filter_by(username=username).first()
-        password = encode_password(request.form['password'])
+        password = encrypt_password(request.form['password'], user.salt)
         if not user or user.password == password:
             if login_user(user, remember=False):
                 flash('Logged in', 'success')
@@ -216,7 +232,6 @@ def topic(topic_id):
     topic.visits += 1
     db.session.add(topic)
     db.session.commit()
-    contents = Markup(markdown.markdown(topic.contents))
     comments = Comments.query.filter_by(topic_id=topic_id).all()
     replied_comments = dict()
     for item in comments:
@@ -267,6 +282,24 @@ def settings():
         redirect('/settings')
     return render_template('settings.html', **locals())
 
+@app.route('/settings/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if request.form['old_password'] != current_user.password:
+            flash('Old password wrong!', 'error')
+            redirect(url_for('change_password'))
+        else:
+            current_user.password = encrypt_password(
+                request.form['new_password'], current_user.salt
+                )
+            db.session.add(current_user)
+            db.session.commit()
+            flash('Password changed', 'success')
+            redirect(url_for('index'))
+    return render_template('change_password.html', **locals())
+
 @app.route('/u/<username>', methods=['GET'])
 def u(username):
     user = Users.query.filter_by(username=username).first_or_404()
@@ -286,14 +319,11 @@ def favicon():
 def page_not_found(error):
     return render_template('404.html'), 404
 
-def encode_password(password):
-    return password
-
 @app.template_filter()
 @evalcontextfilter
 def nl2br(eval_ctx, value):
     result = u'\n\n'.join(u'<p>%s</p>' % p.replace('\n', '<br>\n') \
-        for p in _paragraph_re.split(escape(value)))
+        for p in _paragraph_re.split(value))
     if eval_ctx.autoescape:
         result = Markup(result)
     return result
@@ -304,22 +334,29 @@ def make_markdown(value):
 
 @app.template_filter()
 def escape_script(value):
-    value = value.replace('script', '')
+    value = value.replace('<script', '')
     # value = value.replace('</a', '')
     return value
 
 @app.template_filter()
-def at_sign(value):
-    pat = re.compile(ur'@(\S+)\s')
+def mention(value):
+    value = Markup(value).unescape()
+    # pat = re.compile(ur'(@\w+)\b(?!.cn)\b(?!.com)\b(?!.org)\b(?!.net)')
+    pat = re.compile(ur'(@\S+)')
+    m = u'<a href="/u/%s">%s</a> '
     try:
-        name = pat.search(value).group(1)
-        if Users.query.filter_by(username=name).first():
-            new = pat.sub('<a href="/u/%s">@%s</a> ' % (name, name),value)
-        else:
-            return value
+        users = pat.findall(value)
+        print '-'*80
+        print value
+        print users
+        for i in users:
+            if Users.query.filter_by(username=i[1:]).first():
+                value = value.replace(i, m % (i[1:],i))
     except:
-        return value
-    return new
+        pass
+
+    res = markdown.markdown(value)
+    return Markup(res)
 
 @app.template_filter()
 def timesince(dt, default="just now"):
