@@ -11,7 +11,7 @@
         </div>
       <div class="entry markdown">
         <!-- {{contents | nl2br}} -->
-        {{contents | escape_script | at_sign}}
+        {{contents | urlize(40, True) | escape_script | at_sign}}
       </div>
     </div>
 
@@ -39,7 +39,7 @@
             </div>
 
             <div class="reply_independent markdown">
-              {{reply.contents | at_sign | make_markdown | escape_script }}
+              {{reply.contents | urlize(40, True) | at_sign | make_markdown | escape_script }}
             </div>
             {% if reply.id in replied_comments %}
             <div class="replied_reply">
@@ -58,7 +58,7 @@
                     <!-- <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a> -->
                   </div>
                   <div class="markdown">
-                    {{item.contents | at_sign | make_markdown | escape_script}}
+                    {{item.contents | urlize(40, True) | at_sign | make_markdown | escape_script }}
                   </div>
                 </td>
               </tr>
@@ -125,7 +125,7 @@
 <script type="text/javascript">
   function reply_to(id, real_id) {
     // $('#contents').html(id + 'L ');
-    $('#reply').append(' to #' + id);
+    $('#reply').html('Reply to #' + id);
     $('#reply_to').attr('value', real_id);
   }
   
