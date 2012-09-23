@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row post-view">
+  <div class="span8">
+    <div class="bg-white airmail-box" style="position: relative;">
+      <div class="stamp"></div>
+      <form action="" class="" method="post">
+        {{form.csrf_token}}
+        <input type="hidden" name="user_id" value="{{ current_user.id }}">
+        <legend>Edit Topic</legend>
+        
+        <div class="control-group">
+          {{form.title.label}}
+          <div class="controls">
+            {{form.title(value=topic.title)}}
+          </div>
+        </div>
+        {% if form.title.errors %}
+          {% for error in form.title.errors %}
+          <div class="alert alert-error">
+            {{ error }}
+          </div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="control-group">
+          {{form.contents.label}}
+          <div class="controls">
+            <textarea name="contents" id="contents" cols="30" rows="7">{{topic.contents}}</textarea>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="controls"><input type="submit" class="btn" value="Okay"></div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <div class="span4"></div>
+</div>
+{% endblock %}

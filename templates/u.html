@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %} {{user.username}} {% endblock%}
+
+{% block body %}
+<div class="row u-view">
+  <div class="span8">
+    <div class="airmail-box">
+      <div class="row">
+        <div class="photo">
+            <img src="{{ user.email | gravatar}}" alt="" class="avatar">
+        </div>
+        <div class="meta">
+          <h3>{{user.username}}</h3>
+          <p>{{user.ctime}}</p>
+          <div class="bio">{{user.bio | nl2br}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topics">
+      <div class="bg-white">
+        <h3>Topics</h3>
+        <ul>
+          {% for topic in user.topics | reverse %}
+            <li>
+              <span class="pull-left"><a href="/topic/{{topic.id}}">{{topic}}</a></span>
+              <span class="pull-right">{{topic.ctime}}</span>
+              <div class="clearfix"></div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="replies">
+      <div class="bg-white">
+        <h3>Replies</h3>
+        <ul>
+          {% for reply in user.comments | reverse %}
+            <li>
+              <span class="pull-left"><a href="/topic/{{reply.topic.id}}">{{reply | striptags}}</a></span>
+              <span class="pull-right">{{reply.ctime}}</span>
+              <div class="clearfix"></div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="span4">
+
+  </div>
+</div>
+{% endblock %}

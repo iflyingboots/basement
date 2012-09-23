@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row settings-view">
+  <div class="span8">
+    <div class="bg-white airmail-box" style="position: relative;">
+      <div class="stamp"></div>
+      <form action="" class="form-horizontal" method="post">
+        {{form.csrf_token}}
+        <legend>Profile</legend>
+        <div class="control-group">
+          <div class="controls">
+            <code>http://www.xxx.com/u/{{user.username}}</code>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="email" class="control-label">Email</label>
+          <div class="controls">
+            {{form.email(value=user.email)}}
+          </div>
+        </div>
+        {% if form.email.errors %}
+          <div class="alert alert-error">
+            {{ form.email.errors }}
+          </div>
+        {% endif %}
+
+        <div class="control-group">
+          <label for="bio" class="control-label">Bio</label>
+          <div class="controls">
+            <!-- {{form.bio}} -->
+            <textarea name="bio" id="bio" cols="30" rows="5">
+              {% if user.bio %}
+              {{user.bio}}
+              {% endif %}
+            </textarea>
+          </div>
+        </div>
+        {% if form.bio.errors %}
+          <div class="alert alert-error">
+            {{ form.bio.errors }}
+          </div>
+        {% endif %}
+        
+
+        <div class="control-group">
+          <div class="controls"><input type="submit" class="btn" value="Update"></div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <div class="span4">
+    <div class="airmail-box">
+      <legend>Settings</legend>
+      <ul>
+        <li>Change Password</li>
+        <li>Change Photo</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

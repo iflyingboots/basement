@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row login-view">
+  <div class="span8">
+    <div class="bg-white airmail-box">
+      <div class="stamp"></div>
+      <form action="/signup" class="" method="post">
+        {{form.csrf_token}}
+        <legend>Sign Up</legend>
+        {% for field in form if field!=form.csrf_token %}
+        <div class="control-group">
+          {{field.label}}
+          <div class="controls">
+            {{field(value=request.form[field.name])}}
+          </div>
+        </div>
+        {% if field.errors %}
+          {% for error in field.errors %}
+          <div class="alert alert-error">
+            {{ error }}
+          </div>
+          {% endfor %}
+        {% endif %}
+        {% endfor %}
+        <div class="control-group">
+          <div class="controls"><input type="submit" class="btn" value="Sign Up"></div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <div class="span4"></div>
+</div>
+{% endblock %}

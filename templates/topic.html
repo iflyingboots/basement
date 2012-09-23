@@ -1,0 +1,136 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="row topic-view">
+  <div class="span8">
+  <div class="bg-paper"></div>
+  <h2 class="topic">{{topic.title}}</h2>
+    <div class="entry-bg">
+        <div class="meta">
+        {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits / {{topic.count_comments()}} replies
+        </div>
+      <div class="entry markdown">
+        <!-- {{contents | nl2br}} -->
+        {{contents | escape_script | at_sign}}
+      </div>
+    </div>
+
+    {% if comments%}
+    <div class="replies entry-bg">
+      <table class="table">
+        <tbody>
+      {% for reply in comments %}
+      {% if not reply.reply_to%}
+        <tr>
+          <td class="reply-author">
+            <a href="/u/{{reply.user.username}}"><img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar"></a>
+          </td>
+          <td class="reply-contents" id="reply_{{loop.index}}">
+            <div class="reply-meta">
+              <a href="/u/{{reply.user.username}}">
+                {{reply.user.username}}
+              </a> {{reply.ctime | timesince }} #{{loop.index}}
+              {% if current_user.is_authenticated() %}
+              <span class="pull-right">
+                <a onclick="reply_to({{loop.index}}, {{reply.id}})" href="#reply">>Reply</a>
+                <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a>
+              </span>
+              {% endif %}
+            </div>
+
+            <div class="reply_independent markdown">
+              {{reply.contents | at_sign | make_markdown | escape_script }}
+            </div>
+            {% if reply.id in replied_comments %}
+            <div class="replied_reply">
+            <table class="table">
+            <tbody>
+            {% for item in replied_comments[reply.id] %}
+              <tr>
+                <td class="reply-author">
+                  <a href="/u/{{item.user.username}}"><img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar"></a>
+                </td>
+                <td class="reply-contents">
+                  <div class="reply-meta">
+                    <a href="/u/{{reply.user.username}}">
+                      {{item.user.username}}
+                    </a> {{item.ctime | timesince }}
+                    <!-- <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a> -->
+                  </div>
+                  <div class="markdown">
+                    {{item.contents | at_sign | make_markdown | escape_script}}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+            </div>
+            {% endif %}
+            <!-- <span class="">{{loop.index}}</span> -->
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+
+  </div>
+  <div class="span4">
+    <div class="author-info">
+      <div class="author-info-left">
+      <a href="/u/{{topic.user.username}}">
+        <img src="{{ topic.user.email | gravatar}}" alt="" class="big-photo-round">
+      </a>
+      </div>
+    </div>
+    <!-- post reply -->
+    {% if current_user.is_authenticated()%}
+    <div class="bg-paper-right"></div>
+    <div class="comments entry-bg">
+      <form action="" name="" method="post">
+        {{form.csrf_token}}
+        <input type="hidden" name="reply_to" id="reply_to" value="">
+        <input type="hidden" name="user_id" value="{{current_user.id}}">
+        <legend id="reply">Reply</legend>
+        {% for field in form if field!=form.csrf_token %}
+          {{field}}
+          {% if field.errors %}
+            {% for error in field.errors %}
+            <div class="alert alert-error">
+              {{ error }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        <input type="submit" class="btn" value="commit">
+      </form>
+    </div>
+    {% endif %}
+    <!-- /post reply -->
+    <div class="tools">
+      <a href="/topic/{{topic.id}}/edit" class="btn">Edit</a>
+      <form action="/topic/{{topic.id}}/delete" method="post">
+        <input onclick="return do_confirm('delete')" type="submit" class="btn" value="Delete">
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block js%}
+<script type="text/javascript">
+  function reply_to(id, real_id) {
+    // $('#contents').html(id + 'L ');
+    $('#reply').append(' to #' + id);
+    $('#reply_to').attr('value', real_id);
+  }
+  
+  function at_to(username, username) {
+    $('#contents').html('@' + username + ' ');
+  }
+</script>
+{% endblock%}
