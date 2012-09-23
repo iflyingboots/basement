@@ -10,8 +10,7 @@
         {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits / {{topic.count_comments()}} replies
         </div>
       <div class="entry markdown">
-        <!-- {{contents | nl2br}} -->
-        {{contents | urlize(40, True) | escape_script | at_sign}}
+        {{topic.contents | urlize(40, True) | mention }}
       </div>
     </div>
 
@@ -39,7 +38,7 @@
             </div>
 
             <div class="reply_independent markdown">
-              {{reply.contents | urlize(40, True) | at_sign | make_markdown | escape_script }}
+              {{reply.contents | urlize(40, True) | mention }}
             </div>
             {% if reply.id in replied_comments %}
             <div class="replied_reply">
@@ -58,7 +57,7 @@
                     <!-- <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a> -->
                   </div>
                   <div class="markdown">
-                    {{item.contents | urlize(40, True) | at_sign | make_markdown | escape_script }}
+                    {{item.contents | urlize(40, True) | mention }}
                   </div>
                 </td>
               </tr>
