@@ -62,8 +62,8 @@ class Users(db.Model, UserMixin):
     active = db.Column(db.Integer, default=1)
     bio = db.Column(db.Unicode(45))
     photo = db.Column(db.Unicode(45), default=u"default_avatar.jpg")
-    topics = db.relationship('Topics', backref='user', lazy='dynamic')
-    comments = db.relationship('Comments', backref='user', lazy='dynamic')
+    topics = db.relationship('Topics', cascade='all', backref='user', lazy='dynamic')
+    comments = db.relationship('Comments', cascade='all', backref='user', lazy='dynamic')
 
     def is_active(self):
         return self.active > 0
@@ -78,9 +78,9 @@ class Topics(db.Model):
     contents = db.Column(db.Text)
     ctime = db.Column(db.DateTime)
     rate = db.Column(db.Float)
-    comments = db.relationship('Comments', backref='topic', lazy='dynamic')
+    comments = db.relationship('Comments', cascade='all', backref='topic', lazy='dynamic')
     visits = db.Column(db.Integer, default=0)
-    tags = db.relationship('Tags', backref='topic', lazy='dynamic')
+    tags = db.relationship('Tags', cascade='all', backref='topic', lazy='dynamic')
 
     def count_comments(self):
         return len(self.comments.all())
