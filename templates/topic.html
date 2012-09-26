@@ -22,7 +22,13 @@
       {% if not reply.reply_to%}
         <tr>
           <td class="reply-author">
-            <a href="/u/{{reply.user.username}}"><img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar"></a>
+            <a href="/u/{{reply.user.username}}">
+              {% if b == 'mobile' %}
+              <img src="{{ reply.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
+              {% else %}
+              <img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
+              {%endif%}
+            </a>
           </td>
           <td class="reply-contents" id="reply_{{loop.index}}">
             <div class="reply-meta">
@@ -47,7 +53,13 @@
             {% for item in replied_comments[reply.id] %}
               <tr>
                 <td class="reply-author">
-                  <a href="/u/{{item.user.username}}"><img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar"></a>
+                  <a href="/u/{{item.user.username}}">
+                    {% if b == 'mobile' %}
+                    <img src="{{ reply.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
+                    {% else %}
+                    <img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
+                    {%endif%}
+                  </a>
                 </td>
                 <td class="reply-contents">
                   <div class="reply-meta">
@@ -82,7 +94,9 @@
     <div class="author-info">
       <div class="author-info-left">
       <a href="/u/{{topic.user.username}}">
+        {% if b == 'web' %}
         <img src="{{ topic.user.email | gravatar}}" alt="" class="big-photo-round">
+        {% endif %}
       </a>
       </div>
     </div>
@@ -110,12 +124,14 @@
     </div>
     {% endif %}
     <!-- /post reply -->
+    {% if current_user.id == topic.user.id %}
     <div class="tools">
       <a href="/topic/{{topic.id}}/edit" class="btn">Edit</a>
       <form action="/topic/{{topic.id}}/delete" method="post">
         <input onclick="return do_confirm('delete')" type="submit" class="btn" value="Delete">
       </form>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

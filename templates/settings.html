@@ -9,8 +9,9 @@
         {{form.csrf_token}}
         <legend>Profile</legend>
         <div class="control-group">
+          <label for="url" class="control-label">Your URL</label>
           <div class="controls">
-            <code>http://www.xxx.com/u/{{user.username}}</code>
+            <input type="text" readonly="readonly" value="http://airpost.in/u/{{user.username}}">
           </div>
         </div>
 

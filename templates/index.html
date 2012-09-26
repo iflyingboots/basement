@@ -8,12 +8,19 @@
       <!-- entry -->
       <tr>
         <td class="entries-photo">
-         <a href="/u/{{topic.user.username}}"><img src="{{ topic.user.email | gravatar(size=50)}}" alt="{{topic.user.username}}" class="photo-round"></a>
+         <a href="/u/{{topic.user.username}}">
+          {% if b == 'web' %}
+          <img src="{{ topic.user.email | gravatar(size=50)}}" alt="{{topic.user.username}}" class="photo-round" />
+          {% else %}
+          <img src="{{ topic.user.email | gravatar(size=25)}}" alt="{{topic.user.username}}" class="photo-round" />
+          {% endif %}
+        </a>
         </td>
         <td class="entries-title">
         <div class="inner airmail-box">
           <h4 class="title"><a href="/topic/{{topic.id}}">{{ topic.title }}</a></h4>
           <span class="badge replies-num"><a href="/topic/{{topic.id}}#reply_{{topic.count_comments()}}">{{topic.count_comments()}}</a></span>
+          <div class="clearfix"></div>
           <div class="meta">
             {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits
           <!-- <span class="label"><a href="#">music</a></span>
@@ -29,7 +36,7 @@
     </table>
     
     </div>
-    <div class="span4">
+    <div class="span4 sidebar">
       <div class="bg-white airmail-box">
         <h3 class="h3-title"> Postcode </h3>
         <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>

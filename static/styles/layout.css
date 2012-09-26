@@ -28,7 +28,6 @@ p {
 .logo a {
 	font-family: "Helvetica Neue";
 	color: #777;
-	text-shadow: #fff 0 0 10px;
 	float: left;
 	text-indent: -9999px;
 	background: url(/static/images/logo.png) no-repeat 0 15px;

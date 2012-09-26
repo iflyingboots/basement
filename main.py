@@ -4,7 +4,7 @@ from datetime import datetime
 import markdown
 import os
 import re
-from util import encrypt_password, get_salt
+from util import *
 from flask import (
     Flask, render_template, request, url_for, flash, redirect,
     send_from_directory, Markup, abort
@@ -25,13 +25,11 @@ from flask.ext.login import (
 from flask.ext.gravatar import Gravatar
 from jinja2 import evalcontextfilter, Markup, escape
 
-import views
-
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 # Flask
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_object('basement.config')
 # Flask-cache
 cache = Cache(app)
 # Flask-login
@@ -78,6 +76,11 @@ class Users(db.Model, UserMixin):
     def __unicode__(self):
         return self.username
 
+Topics_nodes = db.Table('topics_nodes',
+    db.Column('topic_id', db.Integer, db.ForeignKey('topics.id')),
+    db.Column('node_id', db.Integer, db.ForeignKey('nodes.id'))
+    )
+
 class Topics(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.Unicode(200))
@@ -85,15 +88,32 @@ class Topics(db.Model):
     contents = db.Column(db.Text)
     ctime = db.Column(db.DateTime)
     rate = db.Column(db.Float)
-    comments = db.relationship('Comments', cascade='all', backref='topic', lazy='dynamic')
+    comments = db.relationship('Comments', cascade='all', backref='topic',
+     lazy='dynamic')
     visits = db.Column(db.Integer, default=0)
-    tags = db.relationship('Tags', cascade='all', backref='topic', lazy='dynamic')
+    last_replied = db.Column(db.DateTime)
+    # tags = db.relationship('Tags', cascade='all', backref='topic', lazy='dynamic')
+    nodes = db.relationship('Nodes', secondary=Topics_nodes,
+        backref=db.backref('topic', lazy='dynamic'))
 
     def count_comments(self):
         return len(self.comments.all())
 
     def __unicode__(self):
         return self.title
+
+class Nodes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.Unicode(45))
+    url = db.Column(db.Unicode(45))
+    active = db.Column(db.Integer())
+    ctime = db.Column(db.DateTime())
+    topic_num = db.Column(db.Integer())
+    topics = db.relationship('Topics', secondary=Topics_nodes,
+        backref=db.backref('node', lazy='dynamic'))
+
+    def __unicode__(self):
+        return self.value
 
 class Comments(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -160,6 +180,10 @@ class ChangePasswordForm(Form):
 # views
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
+    if current_user.is_authenticated():
+        flash('You are logged in', 'error')
+        redirect('/')
+    b = browser(request)
     form = SignupForm()
     if form.validate_on_submit():
         user = Users()
@@ -172,13 +196,17 @@ def signup():
         db.session.add(user)
         db.session.commit()
     return render_template('signup.html', **locals())
-
+    
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    b = browser(request)
     form = LoginForm()
     if form.validate_on_submit():
         username = request.form['username']
         user = Users.query.filter_by(username=username).first()
+        if not user:
+            flash('Please check your username or password', 'error')
+            redirect('/login')
         password = encrypt_password(request.form['password'], user.salt)
         if not user or user.password == password:
             if login_user(user, remember=False):
@@ -186,22 +214,25 @@ def login():
                 return redirect(request.args.get("next") or url_for('index'))
         else:
             flash('error when logging', 'error')
-    return render_template('login.html', form=form)
+    return render_template('login.html', **locals())
 
 @app.route('/logout', methods=['GET'])
 def logout():
+    b = browser(request)
     logout_user()
     flash("Logged out.", "success")
     return redirect(url_for("index"))
 
 @app.route('/', methods=['GET'])
 def index():
-    topics = Topics.query.order_by("id desc").limit(100).all()
+    b = browser(request)
+    topics = Topics.query.order_by("last_replied desc").limit(100).all()
     return render_template('index.html', **locals())
 
 @app.route('/topic/<int:topic_id>/delete', methods=['POST'])
 @login_required
 def topic_delete(topic_id):
+    b = browser(request)
     topic = Topics.query.filter_by(id=topic_id).first_or_404()
     if current_user.id != topic.user_id:
         return abort(404)
@@ -213,6 +244,7 @@ def topic_delete(topic_id):
 @app.route('/topic/<int:topic_id>/edit', methods=['POST', 'GET'])
 @login_required
 def topic_edit(topic_id):
+    b = browser(request)
     topic = Topics.query.filter_by(id=topic_id).first_or_404()
     if current_user.id != topic.user_id:
         return abort(404)
@@ -227,6 +259,7 @@ def topic_edit(topic_id):
 
 @app.route('/topic/<int:topic_id>', methods=['GET', 'POST'])
 def topic(topic_id):
+    b = browser(request)
     form = CommentsForm()
     topic = Topics.query.filter_by(id=topic_id).first_or_404()
     topic.visits += 1
@@ -239,6 +272,7 @@ def topic(topic_id):
             replied_comments.setdefault(item.reply_to, list())
             replied_comments[item.reply_to].append(item)
     if form.validate_on_submit():
+        topic.last_replied = datetime.now()
         comment = Comments()
         comment.topic_id = topic_id
         comment.user_id = request.form['user_id']
@@ -254,6 +288,7 @@ def topic(topic_id):
 @app.route('/post', methods=['GET','POST'])
 @login_required
 def post():
+    b = browser(request)
     form = TopicForm()
     if form.validate_on_submit():
         topic = Topics()
@@ -261,6 +296,7 @@ def post():
         topic.user_id = request.form['user_id']
         topic.contents = request.form['contents']
         topic.ctime = datetime.now()
+        topic.last_replied = topic.ctime
         db.session.add(topic)
         db.session.commit()
         return redirect('/topic/' + str(topic.id))
@@ -269,6 +305,7 @@ def post():
 @app.route('/settings', methods=['GET','POST'])
 @login_required
 def settings():
+    b = browser(request)
     form = SettingsForm()
     user = Users.query.filter_by(id=current_user.id).first()
     # if form.validate_on_submit():
@@ -285,6 +322,7 @@ def settings():
 @app.route('/settings/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
+    b = browser(request)
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if request.form['old_password'] != current_user.password:
@@ -302,11 +340,13 @@ def change_password():
 
 @app.route('/u/<username>', methods=['GET'])
 def u(username):
+    b = browser(request)
     user = Users.query.filter_by(username=username).first_or_404()
     return render_template('u.html', **locals())
 
 @app.route('/page/<page>', methods=['GET'])
 def page(page):
+    b = browser(request)
     return render_template('/page/%s.html' % page)
 
 @app.route('/favicon.ico', methods=['GET'])
@@ -346,9 +386,6 @@ def mention(value):
     m = u'<a href="/u/%s">%s</a> '
     try:
         users = pat.findall(value)
-        print '-'*80
-        print value
-        print users
         for i in users:
             if Users.query.filter_by(username=i[1:]).first():
                 value = value.replace(i, m % (i[1:],i))
@@ -383,9 +420,8 @@ def timesince(dt, default="just now"):
             return "%d %s ago" % (period, singular if period == 1 else plural)
     return default
 
-if __name__ == '__main__':
-    admin = Admin(app)
-    admin.add_view(ModelView(Users, db.session))
-    admin.add_view(ModelView(Topics, db.session))
-    admin.add_view(ModelView(Comments, db.session))
-    app.run(debug=True, port=5000)
+# if __name__ == '__main__':
+#     admin = Admin(app)
+#     admin.add_view(ModelView(Users, db.session))
+#     admin.add_view(ModelView(Topics, db.session))
+#     admin.add_view(ModelView(Comments, db.session))
