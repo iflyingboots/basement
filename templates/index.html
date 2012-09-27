@@ -22,9 +22,16 @@
           <span class="badge replies-num"><a href="/topic/{{topic.id}}#reply_{{topic.count_comments()}}">{{topic.count_comments()}}</a></span>
           <div class="clearfix"></div>
           <div class="meta">
-            {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits
-          <!-- <span class="label"><a href="#">music</a></span>
-          <span class="label"><a href="#">coldplay</a></span> -->
+            <span class="info">
+              {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits  
+            </span>
+
+          {% if topic.nodes %}
+            {% for node in topic.nodes%}
+            <span class="label"><a href="/node/{{node.url}}">{{node.value}}</a></span>
+            {% endfor %}
+          {% endif %}
+          
           </div>
         </div>
         </td>

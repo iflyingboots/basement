@@ -7,7 +7,14 @@
   <h2 class="topic">{{topic.title}}</h2>
     <div class="entry-bg">
         <div class="meta">
-        {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits / {{topic.count_comments()}} replies
+          <span class="info">
+            {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits / {{topic.count_comments()}} replies
+          </span>
+          {% if topic.nodes %}
+          {% for node in topic.nodes%}
+          <span class="label"><a href="/node/{{node.url}}">{{node.value}}</a></span>
+          {% endfor %}
+        {% endif %}
         </div>
       <div class="entry markdown">
         {{topic.contents | urlize(40, True) | mention }}

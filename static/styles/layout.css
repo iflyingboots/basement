@@ -87,7 +87,7 @@ p {
 	height:50px;
 }
 
-.index-view .meta {
+.index-view .meta .info {
 	color: #aaa;
 	font-family: Georgia;
 }
@@ -160,7 +160,7 @@ p {
 	color: #000;
 }
 
-.home-entries .label a {
+.home-entries .label a , .topic-view .label a{
 	color: #fff;
 }
 
@@ -246,7 +246,7 @@ p {
 	font-size: 14px;
 }
 
-.topic-view .meta {
+.topic-view .meta .info {
 	color: #999;
 	text-align: left;
 	font-style: italic;
