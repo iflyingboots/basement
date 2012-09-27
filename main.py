@@ -375,7 +375,7 @@ def nl2br(eval_ctx, value):
 
 @app.template_filter()
 def make_markdown(value):
-    return Markup(markdown.markdown(value))
+    return Markup(markdown.markdown(value, safe_mode='escape'))
 
 @app.template_filter()
 def escape_script(value):
@@ -397,7 +397,7 @@ def mention(value):
     except:
         pass
 
-    res = markdown.markdown(value)
+    res = markdown.markdown(value ,safe_mode='escape')
     return Markup(res)
 
 @app.template_filter()
