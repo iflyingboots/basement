@@ -192,10 +192,12 @@ def signup():
         user.nickname = request.form['username']
         user.email = request.form['email']
         user.salt = get_salt()
-        user.password = encrypt_password(request.form['password'])
+        user.password = encrypt_password(request.form['password'], user.salt)
         user.ctime = datetime.now()
         db.session.add(user)
         db.session.commit()
+        flash('Signed up successful!', 'success')
+        redirect('/')
     return render_template('signup.html', **locals())
     
 @app.route("/login", methods=["GET", "POST"])
