@@ -3,7 +3,7 @@
 import MySQLdb
 from smallseg import SEG
 from config import *
-seg = SEG()
+# seg = SEG()
 
 QNA_ID = 300
 SHARE_ID = 301
@@ -22,16 +22,15 @@ def qna_detect(title):
     question_marks = set([u'?', u'？'])
     return title.strip()[-1] in question_marks or title.strip()[0] == u'求'
 
+#detect share node
 def share_detect(title):
     share_marks = set([u'发现', u'分享', u'推荐', u'试用'])
-    no_words = set(u'求')
-    seg_res = set(seg.cut(title.strip()))
-    return any(i not in no_words and i in share_marks for i in seg_res)
+    return any([i for i in share_marks if title.find(i) > -1])
 
 def city_detect(title):
     nodes = set()
     for city, node_id in CITIES.items():
-        if title.find(city) >= 0:
+        if title.find(city) > -1:
             nodes.add(node_id)
     return nodes
 

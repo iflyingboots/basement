@@ -62,15 +62,15 @@
                 <td class="reply-author">
                   <a href="/u/{{item.user.username}}">
                     {% if b == 'mobile' %}
-                    <img src="{{ reply.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
+                    <img src="{{ item.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
                     {% else %}
-                    <img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
+                    <img src="{{ item.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
                     {%endif%}
                   </a>
                 </td>
                 <td class="reply-contents">
                   <div class="reply-meta">
-                    <a href="/u/{{reply.user.username}}">
+                    <a href="/u/{{item.user.username}}">
                       {{item.user.username}}
                     </a> {{item.ctime | timesince }}
                     <!-- <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a> -->
