@@ -374,16 +374,6 @@ def nl2br(eval_ctx, value):
     return result
 
 @app.template_filter()
-def make_markdown(value):
-    return Markup(markdown.markdown(value, safe_mode='escape'))
-
-@app.template_filter()
-def escape_script(value):
-    value = value.replace('<script', '')
-    # value = value.replace('</a', '')
-    return value
-
-@app.template_filter()
 def mention(value):
     value = Markup(value).unescape()
     # pat = re.compile(ur'(@\w+)\b(?!.cn)\b(?!.com)\b(?!.org)\b(?!.net)')
