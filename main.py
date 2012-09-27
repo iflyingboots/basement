@@ -4,6 +4,7 @@ from datetime import datetime
 import markdown
 import os
 import re
+from node_detect import *
 from util import *
 from flask import (
     Flask, render_template, request, url_for, flash, redirect,
@@ -93,7 +94,7 @@ class Topics(db.Model):
     visits = db.Column(db.Integer, default=0)
     last_replied = db.Column(db.DateTime)
     # tags = db.relationship('Tags', cascade='all', backref='topic', lazy='dynamic')
-    nodes = db.relationship('Nodes', secondary=Topics_nodes,
+    nodes = db.relationship('Nodes', secondary=Topics_nodes, 
         backref=db.backref('topic', lazy='dynamic'))
 
     def count_comments(self):
@@ -109,8 +110,8 @@ class Nodes(db.Model):
     active = db.Column(db.Integer())
     ctime = db.Column(db.DateTime())
     topic_num = db.Column(db.Integer())
-    topics = db.relationship('Topics', secondary=Topics_nodes,
-        backref=db.backref('node', lazy='dynamic'))
+    # topics = db.relationship('Topics', secondary=Topics_nodes, 
+    #     backref=db.backref('node', lazy='dynamic'))
 
     def __unicode__(self):
         return self.value
@@ -299,8 +300,9 @@ def post():
         topic.last_replied = topic.ctime
         db.session.add(topic)
         db.session.commit()
+        nodes = overall_detect(topic.id, topic.title)
         return redirect('/topic/' + str(topic.id))
-    return render_template('post.html', form=form)
+    return render_template('post.html', **locals())
 
 @app.route('/settings', methods=['GET','POST'])
 @login_required
@@ -357,7 +359,8 @@ def favicon():
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404.html'), 404
+    b = browser(request)
+    return render_template('404.html', **locals()), 404
 
 @app.template_filter()
 @evalcontextfilter
