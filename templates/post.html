@@ -8,6 +8,7 @@
       <form action="" class="" method="post">
         {{form.csrf_token}}
         <input type="hidden" name="user_id" value="{{ current_user.id }}">
+        <input type="hidden" name="source" value="{{b}}">
         <legend>Post a New Topic</legend>
         {% for field in form if field!=form.csrf_token %}
         <div class="control-group">

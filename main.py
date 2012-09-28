@@ -158,7 +158,30 @@ class Notifications(db.Model):
     param3 = db.Column(db.Integer)
 
     def __unicode__(self):
-        return '<id:%d, user:%d, read:%d, time:%s>' % (id, user, read, time)
+        return self.trans()
+
+    def trans(self):
+    # 1: user:param1 replied to topic:param2
+        if self.type == 1:
+            user = Users.query.filter_by(id=self.param1).first()
+            topic = Topics.query.filter_by(id=self.param2).first()
+            return '<a href="/u/%s">%s</a> replied to <a href="/topic/%d?nid=%d">%s</a>' % (
+                user.username, user.username, topic.id, self.id, topic.title
+                )
+        # 2: user:param1 replied to your comment comment:param2
+        elif self.type == 2:
+            user = Users.query.filter_by(id=self.param1).first()
+            comment = Comments.query.filter_by(id=self.param2).first()
+            return '<a href="/u/%s">%s</a> replied to your comment: <a href="/topic/%d?nid=%d">%s</a>' % (
+                user.username, user.username, comment.topic.id, self.id, comment.contents
+                )
+        # 3: user:param1 mentioned you on topic topic:param2
+        elif self.type == 3:
+            user = Users.query.filter_by(id=self.param1).first()
+            topic = Topics.query.filter_by(id=self.param2).first()
+            return '<a href="/u/%s">%s</a> mentioned you on <a href="/topic/%d?nid=%d">%s</a>' % (
+                user.username, user.username, topic.id, self.id, topic.title
+                )
 
 # forms
 class LoginForm(Form):
@@ -200,6 +223,9 @@ class ChangePasswordForm(Form):
     confirm = PasswordField(u'Repeat Password', validators=[
         Required(), EqualTo('new_password', message='Passwords must match')]
         )
+
+class MarkNotisForm(Form):
+    user_id = TextField(u'', validators=[Required()])
 
 # views
 @app.route('/signup', methods=["GET", "POST"])
@@ -251,7 +277,9 @@ def logout():
 
 @app.route('/', methods=['GET'])
 def index():
+    notis = get_unread(current_user.id)
     b = browser(request)
+    notisForm = MarkNotisForm()
     topics = Topics.query.order_by("last_replied desc").limit(100).all()
     return render_template('index.html', **locals())
 
@@ -289,6 +317,9 @@ def topic(topic_id):
     form = CommentsForm()
     topic = Topics.query.filter_by(id=topic_id).first_or_404()
     topic.visits += 1
+    # mark unread notification as read
+    if request.args.get('nid'):
+        mark_one(request.args.get('nid'))
     db.session.add(topic)
     db.session.commit()
     comments = Comments.query.filter_by(topic_id=topic_id).all()
@@ -304,7 +335,26 @@ def topic(topic_id):
         comment.user_id = request.form['user_id']
         comment.contents = request.form['contents']
         comment.ctime = datetime.now()
-        comment.reply_to = request.form['reply_to']
+        re_to = request.form['reply_to']
+        # send notifications
+        if re_to:
+            comment.reply_to = re_to
+            reply_to_user = Comments.query.get(re_to).user_id
+            if reply_to_user != topic.user_id:
+                send_notification(
+                    reply_to_user,
+                    2,
+                    param1=current_user.id,
+                    param2=re_to
+                )
+        if current_user.id != topic.user_id:
+            send_notification(
+                topic.user_id,
+                1,
+                param1=current_user.id,
+                param2=topic_id
+            )
+        send_mention(request.form['contents'], current_user.id, topic.id)
         db.session.add(comment)
         db.session.commit()
         flash('Replied successful', 'success')
@@ -323,6 +373,8 @@ def post():
         topic.contents = request.form['contents']
         topic.ctime = datetime.now()
         topic.last_replied = topic.ctime
+        # send mention notifications
+        send_mention(topic.contents, current_user.id, topic.id)
         db.session.add(topic)
         db.session.commit()
         nodes = overall_detect(topic.id, topic.title)
@@ -371,6 +423,19 @@ def u(username):
     user = Users.query.filter_by(username=username).first_or_404()
     return render_template('u.html', **locals())
 
+@app.route('/mark_notifications', methods=['POST'])
+def mark_notifications():
+    notis = Notifications.query.filter_by(read=0).all()
+    for n in notis:
+        n.read = 1
+    db.session.commit()
+    return 'Marked all notifications as read!'
+
+def mark_one(nid):
+    notis = Notifications.query.filter_by(id=nid, read=0).first()
+    notis.read = 1 
+    db.session.commit()
+
 @app.route('/page/<page>', methods=['GET'])
 def page(page):
     b = browser(request)
@@ -396,22 +461,36 @@ def nl2br(eval_ctx, value):
         result = Markup(result)
     return result
 
-@app.template_filter()
-def mention(value):
-    value = Markup(value).unescape()
-    # pat = re.compile(ur'(@\w+)\b(?!.cn)\b(?!.com)\b(?!.org)\b(?!.net)')
-    pat = re.compile(ur'(@\S+)')
-    m = u'<a href="/u/%s">%s</a> '
+def send_mention(html, sender_id, topic_id):
+    pat = re.compile(ur'(@\S+?)[\<\s+]')
     try:
-        users = pat.findall(value)
+        users = pat.findall(html)
         for i in users:
-            if Users.query.filter_by(username=i[1:]).first():
-                value = value.replace(i, m % (i[1:],i))
+            u = Users.query.filter_by(username=i[1:]).first()
+            if u:
+                send_notification(
+                    u.id,
+                    3,
+                    param1=sender_id,
+                    param2=topic_id
+                )
     except:
         pass
 
-    res = markdown.Markdown(safe_mode='escape', extensions=['urlize'])
+@app.template_filter()
+def mention(value):
+    res = markdown.Markdown(safe_mode=False, extensions=['urlize', 'nl2br'])
     res = res.convert(value)
+    pat = re.compile(ur'(@\S+?)[\<\s+]')
+    m = u'<a href="/u/%s">%s</a> '
+    try:
+        users = pat.findall(res)
+        for i in users:
+            if Users.query.filter_by(username=i[1:]).first():
+                res = res.replace(i, m % (i[1:],i))
+    except:
+        pass
+
     return Markup(res)
 
 @app.template_filter()
@@ -439,28 +518,21 @@ def timesince(dt, default="just now"):
             return "%d %s ago" % (period, singular if period == 1 else plural)
     return default
 
-def trans_notification(type, param1, param2='', param3=''):
-    # 1: user:param1 replied to topic:param2
-    if type == '1':
-        user = Users.query.filter_by(id=param1).first()
-        topic = Topics.query.filter_by(id=param2).first()
-        return '%s replied to <a href="/topic/%d">%s</a>' % (
-            user.username, topic.id, topic.title
-            )
-    # 2: user:param1 replied to your comment comment:param2
-    elif type == '2':
-        user = Users.query.filter_by(id=param1).first()
-        comment = Comments.query.filter_by(id=param2).first()
-        return '%s replied to your comment on <a href="/topic/%d#reply">%s</a>' % (
-            user.username, comment.topic.id, comment.value
-            )
-    # 3: user:param1 mentioned you on topic topic:param2
-    elif type == '3':
-        user = Users.query.filter_by(id=param1).first()
-        topic = Topics.query.filter_by(id=param2).first()
-        return '%s mentioned you on <a href="/topic/%d">%s</a>' % (
-            user.username, topic.id, topic.title
-            )
+def get_unread(user_id):
+    return Notifications.query.filter_by(user_id=user_id, read=0).all()
+
+def send_notification(user_id, type, **params):
+    n = Notifications()
+    n.user_id = user_id
+    n.type = type
+    n.read = 0
+    n.ctime = datetime.now()
+    #@TODO: not robust :(
+    for k,v in params.items():
+        setattr(n, k, v)
+    db.session.add(n)
+    db.session.commit()
+
 # if __name__ == '__main__':
 #     admin = Admin(app)
 #     admin.add_view(ModelView(Users, db.session))

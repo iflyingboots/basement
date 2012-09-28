@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% block title %}{% if notis %} ({{notis | length}}){%endif%} {%endblock%}
 {% block body %}
   <div class="row index-view">
     <div class="span8">
@@ -31,7 +32,7 @@
             <span class="label"><a href="/node/{{node.url}}">{{node.value}}</a></span>
             {% endfor %}
           {% endif %}
-          
+
           </div>
         </div>
         </td>
@@ -45,9 +46,25 @@
     </div>
     <div class="span4 sidebar">
       <div class="bg-white airmail-box">
-        <h3 class="h3-title"> Postcode </h3>
+        <h3 class="h3-title">Postcode</h3>
         <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
       </div>
+      <br>
+      <div class="bg-white airmail-box notifications">
+        <h3 class="h3-title">Notifications{% if notis %} ({{notis | length}}) <a href="###" onclick="mark_notis()"><i id="icon-ok" class="icon-ok"></i></a><div id="csrf"></div>{% endif %}
+        </h3>
+        {% if notis %}
+        <ul id="notis">
+          {% for n in notis %}
+          <li>{{ n | safe }}</li>
+          <!-- <li>{{ n }}</li> -->
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p><a href="/notifications">No new notifications</a></p>
+        {% endif %}
+      </div>
+      
       <div class="bg-white search">
         <form class="form-search">
           <input type="text" class="input-medium search-query">
@@ -56,4 +73,33 @@
       </div>  
     </div>
   </div>
+{% endblock %}
+
+{% block js %}
+<script type="text/javascript">
+  function mark_notis() {
+    $.ajax({
+      type : 'POST',
+      url : '/mark_notifications',
+      success : function(html) {
+        alert(html);
+        $('#notis').html('<p><a href="/notifications">No new notifications</a></p>');
+        $('#icon-ok').hide();
+      }
+    })
+  }
+
+  function mark_one(nid) {
+    $.ajax({
+      type : 'POST',
+      url : '/mark_one',
+      params : {
+        'nid' : nid,
+      },
+      success : function(html) {
+        alert(html);
+      }
+    })
+  }
+</script>
 {% endblock %}

@@ -96,6 +96,21 @@ p {
 	margin: 10px 0;
 }
 
+.index-view .notifications i {
+	margin: 0 5px;
+}
+
+.index-view .notifications ul {
+	list-style: circle;
+	margin: 0;
+	margin-left: 20px;
+	font-size: 14px;
+}
+
+.index-view .notifications ul li a {
+	text-decoration: underline;
+}
+
 .big-photo-round {
 	box-shadow: #eee 0 0 10px;
 	border-radius: 50px;
@@ -179,7 +194,8 @@ p {
 }
 
 .h3-title {
-	line-height: 36px;
+	line-height: 28px;
+	vertical-align: middle;
 	margin: 4px 0;
 	padding: 0;
 	font-size: 19px;

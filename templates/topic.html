@@ -149,10 +149,12 @@
     // $('#contents').html(id + 'L ');
     $('#reply').html('Reply to #' + id);
     $('#reply_to').attr('value', real_id);
+    $('#contents').focus();
   }
   
   function at_to(username, username) {
     $('#contents').html('@' + username + ' ');
+    $('#contents').focus();
   }
 </script>
 {% endblock%}
