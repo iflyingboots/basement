@@ -17,7 +17,7 @@
         {% endif %}
         </div>
       <div class="entry markdown">
-        {{topic.contents | urlize(40, True) | mention }}
+        {{topic.contents | mention }}
       </div>
     </div>
 
@@ -51,7 +51,7 @@
             </div>
 
             <div class="reply_independent markdown">
-              {{reply.contents | urlize(40, True) | mention }}
+              {{reply.contents | mention }}
             </div>
             {% if reply.id in replied_comments %}
             <div class="replied_reply">
@@ -76,7 +76,7 @@
                     <!-- <a href="#reply" onclick="at_to('{{reply.user.username}}','{{reply.user.username}}')">@{{reply.user.username}}</a> -->
                   </div>
                   <div class="markdown">
-                    {{item.contents | urlize(40, True) | mention }}
+                    {{item.contents | mention }}
                   </div>
                 </td>
               </tr>

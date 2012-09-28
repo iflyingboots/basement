@@ -4,6 +4,7 @@ from datetime import datetime
 import markdown
 import os
 import re
+import sys
 from node_detect import *
 from util import *
 from flask import (
@@ -25,6 +26,9 @@ from flask.ext.login import (
     )
 from flask.ext.gravatar import Gravatar
 from jinja2 import evalcontextfilter, Markup, escape
+
+# import mdx_urlize module
+sys.path.append(os.getcwd() + '/basement')
 
 _paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
@@ -70,6 +74,7 @@ class Users(db.Model, UserMixin):
     photo = db.Column(db.Unicode(45), default=u"default_avatar.jpg")
     topics = db.relationship('Topics', cascade='all', backref='user', lazy='dynamic')
     comments = db.relationship('Comments', cascade='all', backref='user', lazy='dynamic')
+    notifications = db.relationship('Notifications', cascade='all', backref='user', lazy='dynamic')
 
     def is_active(self):
         return self.active > 0
@@ -89,6 +94,7 @@ class Topics(db.Model):
     contents = db.Column(db.Text)
     ctime = db.Column(db.DateTime)
     rate = db.Column(db.Float)
+    source = db.Column(db.Unicode(45))
     comments = db.relationship('Comments', cascade='all', backref='topic',
      lazy='dynamic')
     visits = db.Column(db.Integer, default=0)
@@ -141,6 +147,19 @@ class Tags(db.Model):
     def __unicode__(self):
         return '<Tag %s for %s>' % (self.value, self.topic_id)
 
+class Notifications(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    type = db.Column(db.Integer)
+    read = db.Column(db.Integer)
+    ctime = db.Column(db.DateTime)
+    param1 = db.Column(db.Integer)
+    param2 = db.Column(db.Integer)
+    param3 = db.Column(db.Integer)
+
+    def __unicode__(self):
+        return '<id:%d, user:%d, read:%d, time:%s>' % (id, user, read, time)
+
 # forms
 class LoginForm(Form):
     username = TextField(u'User Name', validators=[Required()])
@@ -154,6 +173,10 @@ class SignupForm(Form):
     def validate_username(form, field):
         if Users.query.filter_by(username=field.data).first():
             raise ValidationError('Username exsits.')
+
+    def validate_email(form, field):
+        if Users.query.filter_by(email=field.data).first():
+            raise ValidationError('Email exsits.')        
 
 class TopicForm(Form):
     title = TextField(u'Title', validators=[Required()])
@@ -387,7 +410,8 @@ def mention(value):
     except:
         pass
 
-    res = markdown.markdown(value ,safe_mode='escape')
+    res = markdown.Markdown(safe_mode='escape', extensions=['urlize'])
+    res = res.convert(value)
     return Markup(res)
 
 @app.template_filter()
@@ -415,6 +439,28 @@ def timesince(dt, default="just now"):
             return "%d %s ago" % (period, singular if period == 1 else plural)
     return default
 
+def trans_notification(type, param1, param2='', param3=''):
+    # 1: user:param1 replied to topic:param2
+    if type == '1':
+        user = Users.query.filter_by(id=param1).first()
+        topic = Topics.query.filter_by(id=param2).first()
+        return '%s replied to <a href="/topic/%d">%s</a>' % (
+            user.username, topic.id, topic.title
+            )
+    # 2: user:param1 replied to your comment comment:param2
+    elif type == '2':
+        user = Users.query.filter_by(id=param1).first()
+        comment = Comments.query.filter_by(id=param2).first()
+        return '%s replied to your comment on <a href="/topic/%d#reply">%s</a>' % (
+            user.username, comment.topic.id, comment.value
+            )
+    # 3: user:param1 mentioned you on topic topic:param2
+    elif type == '3':
+        user = Users.query.filter_by(id=param1).first()
+        topic = Topics.query.filter_by(id=param2).first()
+        return '%s mentioned you on <a href="/topic/%d">%s</a>' % (
+            user.username, topic.id, topic.title
+            )
 # if __name__ == '__main__':
 #     admin = Admin(app)
 #     admin.add_view(ModelView(Users, db.session))
