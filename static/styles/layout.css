@@ -140,8 +140,11 @@ p {
 .airmail-box {
 	padding: 10px;
 	background-color: #fff;
+	border-top: #bbb 1px solid;
+	border-left: #bbb 1px solid;
+	border-bottom: #aaa 1px solid;
+	border-right: #aaa 1px solid;
 	border-width: 8px;
-	border-color: #fff;
 	-webkit-border-image: url(../images/airmail_border.png) 30 repeat;
 	-moz-border-image: url(../images/airmail_border.png) 30 repeat;
 	-o-border-image: url(../images/airmail_border.png) 30 repeat;

@@ -1,0 +1,9 @@
+.airmail-box {
+	padding: 10px;
+	background-color: #fff;
+	border-top: #bbb 1px solid;
+	border-left: #bbb 1px solid;
+	border-bottom: #aaa 1px solid;
+	border-right: #aaa 1px solid;
+	box-shadow: #aaa 1px 1px 5px;
+}

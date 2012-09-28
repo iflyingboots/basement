@@ -18,7 +18,9 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/mobile.css')}}" />
         {% endif %}
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/github.css') }}"/>
-        
+        <!--[if lt IE 7]>
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/iedie.css') }}"/>
+        <![endif]-->
         <script src="/static/scripts/vendor/modernizr.min.js"></script>
     </head>
     <body>
