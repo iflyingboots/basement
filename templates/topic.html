@@ -31,9 +31,9 @@
           <td class="reply-author">
             <a href="/u/{{reply.user.username}}">
               {% if b == 'mobile' %}
-              <img src="{{ reply.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
+              <img src="{{ reply.user | avatar(25)}}" alt="{{reply.user.username}}" class="avatar">
               {% else %}
-              <img src="{{ reply.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
+              <img src="{{ reply.user | avatar}}" alt="{{reply.user.username}}" class="avatar">
               {%endif%}
             </a>
           </td>
@@ -62,9 +62,9 @@
                 <td class="reply-author">
                   <a href="/u/{{item.user.username}}">
                     {% if b == 'mobile' %}
-                    <img src="{{ item.user.email | gravatar(size=25)}}" alt="{{reply.user.username}}" class="avatar">
+                    <img src="{{ item.user | avatar(25)}}" alt="{{reply.user.username}}" class="avatar">
                     {% else %}
-                    <img src="{{ item.user.email | gravatar}}" alt="{{reply.user.username}}" class="avatar">
+                    <img src="{{ item.user | avatar}}" alt="{{reply.user.username}}" class="avatar">
                     {%endif%}
                   </a>
                 </td>
@@ -102,7 +102,7 @@
       <div class="author-info-left">
       <a href="/u/{{topic.user.username}}">
         {% if b == 'web' %}
-        <img src="{{ topic.user.email | gravatar}}" alt="" class="big-photo-round">
+        <img src="{{ topic.user | avatar(100)}}" alt="" class="big-photo-round">
         {% endif %}
       </a>
       </div>

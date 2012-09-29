@@ -11,9 +11,9 @@
         <td class="entries-photo">
          <a href="/u/{{topic.user.username}}">
           {% if b == 'web' %}
-          <img src="{{ topic.user.email | gravatar(size=50)}}" alt="{{topic.user.username}}" class="photo-round" />
+          <img src="{{ topic.user | avatar(50) }}" alt="{{topic.user.username}}" class="photo-round" />
           {% else %}
-          <img src="{{ topic.user.email | gravatar(size=25)}}" alt="{{topic.user.username}}" class="photo-round" />
+          <img src="{{ topic.user | avatar(25)}}" alt="{{topic.user.username}}" class="photo-round" />
           {% endif %}
         </a>
         </td>
@@ -50,8 +50,10 @@
         <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
       </div>
       <br>
+
+      {% if current_user.is_authenticated() %}
       <div class="bg-white airmail-box notifications">
-        <h3 class="h3-title">Notifications{% if notis %} ({{notis | length}}) <a href="###" onclick="mark_notis()"><i id="icon-ok" class="icon-ok"></i></a><div id="csrf"></div>{% endif %}
+        <h3 class="h3-title">Notifications <span id="notis-title">{% if notis %} ({{notis | length}}) <a href="###" onclick="mark_notis()"><i id="icon-ok" class="icon-ok"></i></a>{% endif %}</span>
         </h3>
         {% if notis %}
         <ul id="notis">
@@ -64,6 +66,7 @@
         <p><a href="/notifications">No new notifications</a></p>
         {% endif %}
       </div>
+      {% endif %}
       
       <div class="bg-white search">
         <form class="form-search">
@@ -84,7 +87,8 @@
       success : function(html) {
         alert(html);
         $('#notis').html('<p><a href="/notifications">No new notifications</a></p>');
-        $('#icon-ok').hide();
+        $('#notis-title').hide();
+        $('title').html('AirPost');
       }
     })
   }

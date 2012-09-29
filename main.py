@@ -5,13 +5,14 @@ import markdown
 import os
 import re
 import sys
+from PIL import Image
 from node_detect import *
 from util import *
 from flask import (
     Flask, render_template, request, url_for, flash, redirect,
     send_from_directory, Markup, abort
     )
-from flask.ext.admin import Admin
+# from flask.ext.admin import Admin
 from flaskext.cache import Cache
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.wtf import (
@@ -25,6 +26,7 @@ from flask.ext.login import (
     UserMixin, AnonymousUser, confirm_login, fresh_login_required
     )
 from flask.ext.gravatar import Gravatar
+from flask.ext.uploads import *
 from jinja2 import evalcontextfilter, Markup, escape
 
 # import mdx_urlize module
@@ -56,6 +58,9 @@ gravatar = Gravatar(app,
                     default='retro',
                     force_default=False,
                     force_lower=False)
+# Flask-Uploads
+avatars = UploadSet('avatars', IMAGES)
+configure_uploads(app, (avatars,))
 
 # models
 class Anonymous(AnonymousUser):
@@ -232,7 +237,7 @@ class MarkNotisForm(Form):
 def signup():
     if current_user.is_authenticated():
         flash('You are logged in', 'error')
-        redirect('/')
+        return redirect('/')
     b = browser(request)
     form = SignupForm()
     if form.validate_on_submit():
@@ -246,7 +251,7 @@ def signup():
         db.session.add(user)
         db.session.commit()
         flash('Signed up successful!', 'success')
-        redirect('/')
+        return redirect('/login')
     return render_template('signup.html', **locals())
     
 @app.route("/login", methods=["GET", "POST"])
@@ -277,7 +282,8 @@ def logout():
 
 @app.route('/', methods=['GET'])
 def index():
-    notis = get_unread(current_user.id)
+    if current_user.is_authenticated():
+        notis = get_unread(current_user.id)
     b = browser(request)
     notisForm = MarkNotisForm()
     topics = Topics.query.order_by("last_replied desc").limit(100).all()
@@ -404,9 +410,10 @@ def change_password():
     b = browser(request)
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        if request.form['old_password'] != current_user.password:
-            flash('Old password wrong!', 'error')
-            redirect(url_for('change_password'))
+        if encrypt_password(request.form['old_password'], current_user.salt) != current_user.password:
+            # flash('Old password wrong!', 'error')
+            flash(request.form['old_password'])
+            return redirect(url_for('change_password'))
         else:
             current_user.password = encrypt_password(
                 request.form['new_password'], current_user.salt
@@ -416,6 +423,25 @@ def change_password():
             flash('Password changed', 'success')
             redirect(url_for('index'))
     return render_template('change_password.html', **locals())
+
+@app.route('/settings/change_avatar', methods=['GET', 'POST'])
+@login_required
+def change_avatar():
+    b = browser(request)    
+    if request.method == 'POST' and 'avatar' in request.files:
+        try:
+            filename = avatars.save(
+                request.files['avatar'], name='%s.' % (current_user.id,)
+            )
+            resize_image(filename, 'avatars')
+            current_user.photo = filename
+            db.session.commit()
+            flash('Changed avatar', 'success')
+            return redirect('/u/%s' % (current_user.username))
+        except UploadNotAllowed:
+            flash('Upload file not allowed', 'error')
+            return redirect('/change_avatar')
+    return render_template('change_avatar.html', **locals())
 
 @app.route('/u/<username>', methods=['GET'])
 def u(username):
@@ -433,8 +459,9 @@ def mark_notifications():
 
 def mark_one(nid):
     notis = Notifications.query.filter_by(id=nid, read=0).first()
-    notis.read = 1 
-    db.session.commit()
+    if notis:
+        notis.read = 1
+        db.session.commit()
 
 @app.route('/page/<page>', methods=['GET'])
 def page(page):
@@ -446,7 +473,7 @@ def favicon():
     return send_from_directory(
         os.path.join(app.root_path, 'static'), 'favicon.ico'
         )
-
+    
 @app.errorhandler(404)
 def page_not_found(error):
     b = browser(request)
@@ -490,8 +517,17 @@ def mention(value):
                 res = res.replace(i, m % (i[1:],i))
     except:
         pass
-
     return Markup(res)
+
+@app.template_filter()
+def avatar(u, size=50):
+    if u.photo and u.photo != 'default_avatar.jpg':
+        photo = '/static/uploads/avatars/'
+        photo += '%s_%d.%s' % (
+            u.photo.split('.')[0], size, u.photo.split('.')[1]
+        )
+        return photo
+    return gravatar(u.email, size=size)
 
 @app.template_filter()
 def timesince(dt, default="just now"):
@@ -517,6 +553,16 @@ def timesince(dt, default="just now"):
         if period:
             return "%d %s ago" % (period, singular if period == 1 else plural)
     return default
+
+def resize_image(image, upload_type):
+    path = os.path.join(UPLOADS_DEFAULT_DEST, upload_type, image)
+    print path
+    im = Image.open(path)
+    ratio = float(im.size[0]) / float(im.size[1])
+    name, ext = image.split('.')
+    for i in (25, 50, 100):
+        filename = os.path.join(UPLOADS_DEFAULT_DEST, upload_type, '%s_%d.%s' % (name, i, ext))
+        im.resize((int(i), int(i/ratio)), Image.ANTIALIAS).save(filename)
 
 def get_unread(user_id):
     return Notifications.query.filter_by(user_id=user_id, read=0).all()

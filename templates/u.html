@@ -8,12 +8,12 @@
     <div class="airmail-box">
       <div class="row">
         <div class="photo">
-            <img src="{{ user.email | gravatar}}" alt="" class="avatar">
+            <img src="{{ user | avatar(100)}}" alt="" class="avatar" />
         </div>
         <div class="meta">
           <h3>{{user.username}}</h3>
           <p>{{user.ctime}}</p>
-          <div class="bio">{{user.bio | nl2br}}</div>
+          <div class="bio">{% if user.bio %}{{user.bio | nl2br}}{% endif %}</div>
         </div>
       </div>
     </div>
