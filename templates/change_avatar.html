@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block title%}Change Avatar{% endblock %}
+{% block body %}
+<div class="row change-password-view">
+  <div class="span8">
+    <div class="bg-white airmail-box">
+      <form method="POST" enctype="multipart/form-data" class="form-horizontal" action="">
+        <legend>Change Avatar</legend>
+        <div class="alert">
+          <p>* Airpost uses <a href="http://gravatar.com">Gravatar</a> as your default photo. </p>
+          <p>* <a href="http://gravatar.com">Gravatar</a> is a service that can help you use a global avatar in the Internet. </p>
+          <p>* You can also upload your photo as your avatar in this page. </p>
+          <p>* Image must be JPG/JPEG/GIF/PNG file.</p>
+        </div>
+        
+        <div class="control-group">
+          <label for="avatar" class="control-label">Select Avatar File</label>
+          <div class="controls">
+            <input type="file" name="avatar" id="avatar">
+          </div>
+        </div>
+        {% if error %}
+          <div class="alert alert-error">
+            {{ error }}
+          </div>
+        {% endif %}
+        <div class="control-group">
+          <div class="controls"><input type="submit" class="btn" value="Upload"></div>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  <div class="span4">
+  </div>
+</div>
+{% endblock %}

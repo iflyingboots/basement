@@ -3,7 +3,7 @@
 *.psd
 *.eps
 static/styles/main.min.css
-
+static/uploads/*
 static/styles/github.min.css
 
 static/styles/bootstrap-responsive.min.css
