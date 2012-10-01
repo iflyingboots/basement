@@ -153,7 +153,12 @@
   }
   
   function at_to(username, username) {
-    $('#contents').html('@' + username + ' ');
+    var contents = $('#contents').val();
+    if(!contents) {
+      $('#contents').val('@' + username + ' ');
+    } else {
+      $('#contents').val(contents + ' ' + '@' + username + ' ');
+    }
     $('#contents').focus();
   }
 </script>

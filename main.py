@@ -60,6 +60,7 @@ gravatar = Gravatar(app,
                     force_lower=False)
 # Flask-Uploads
 avatars = UploadSet('avatars', IMAGES)
+photos = UploadSet('photos', IMAGES)
 configure_uploads(app, (avatars,))
 
 # models
@@ -281,6 +282,7 @@ def logout():
     return redirect(url_for("index"))
 
 @app.route('/', methods=['GET'])
+@cache.cached(timeout=5)
 def index():
     if current_user.is_authenticated():
         notis = get_unread(current_user.id)
@@ -312,6 +314,7 @@ def topic_edit(topic_id):
     if form.validate_on_submit():
         topic.title = request.form['title']
         topic.contents = request.form['contents']
+        overall_detect(topic.id, topic.title)
         db.session.commit()
         flash('You have edited the topic', 'success')
         return redirect('/topic/' + str(topic_id))
@@ -433,21 +436,30 @@ def change_avatar():
             filename = avatars.save(
                 request.files['avatar'], name='%s.' % (current_user.id,)
             )
-            resize_image(filename, 'avatars')
+            resize_avatar(filename, 'avatars')
             current_user.photo = filename
             db.session.commit()
             flash('Changed avatar', 'success')
             return redirect('/u/%s' % (current_user.username))
         except UploadNotAllowed:
             flash('Upload file not allowed', 'error')
-            return redirect('/change_avatar')
+            return redirect('/settings/change_avatar')
     return render_template('change_avatar.html', **locals())
 
 @app.route('/u/<username>', methods=['GET'])
+@cache.cached(timeout=60)
 def u(username):
     b = browser(request)
     user = Users.query.filter_by(username=username).first_or_404()
     return render_template('u.html', **locals())
+
+@app.route('/notifications', methods=['GET'])
+@login_required
+@cache.cached(timeout=60)
+def notifications():
+    b = browser(request)
+    notis = Notifications.query.filter_by(user_id=current_user.id).order_by('ctime desc').all()
+    return render_template('notifications.html', **locals())
 
 @app.route('/mark_notifications', methods=['POST'])
 def mark_notifications():
@@ -464,6 +476,7 @@ def mark_one(nid):
         db.session.commit()
 
 @app.route('/page/<page>', methods=['GET'])
+@cache.cached(timeout=6000)
 def page(page):
     b = browser(request)
     return render_template('/page/%s.html' % page)
@@ -554,7 +567,7 @@ def timesince(dt, default="just now"):
             return "%d %s ago" % (period, singular if period == 1 else plural)
     return default
 
-def resize_image(image, upload_type):
+def resize_avatar(image, upload_type):
     path = os.path.join(UPLOADS_DEFAULT_DEST, upload_type, image)
     print path
     im = Image.open(path)

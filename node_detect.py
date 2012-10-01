@@ -3,6 +3,7 @@
 import MySQLdb
 from smallseg import SEG
 from config import *
+from cities import *
 # seg = SEG()
 
 QNA_ID = 300
@@ -29,6 +30,7 @@ def share_detect(title):
 
 def city_detect(title):
     nodes = set()
+    CITIES = get_blocks()
     for city, node_id in CITIES.items():
         if title.find(city) > -1:
             nodes.add(node_id)

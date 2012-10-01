@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block title%}Settings{% endblock %}
+{% block body %}
+<div class="row notifications-view">
+  <div class="span8">
+    <div class="bg-white airmail-box">
+      <h3 class="h3-title">Notifications</h3>
+      <br>
+      <div class="notis">
+        {% if notis %}
+        <table class="table table-striped">
+          <tbody>
+          {% for n in notis %}
+          <tr>
+            <td style="width: 3%; text-align: center;">
+              {% if n.read == 0 %} <i class="icon-star"></i> {% endif %}
+            </td>
+            <td style="width:70%;">{{n | safe}}</td>
+            <td>{{n.ctime}}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p>No notitications.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="span4">
+  </div>
+</div>
+{% endblock %}
