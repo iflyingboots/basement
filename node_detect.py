@@ -1,26 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import MySQLdb
-from smallseg import SEG
+import time
 from config import *
 from cities import *
-# seg = SEG()
+from db import DB
 
 QNA_ID = 300
 SHARE_ID = 301
 
-db = MySQLdb.connect(
+db = DB()
+
+def re_connect():
+    db = MySQLdb.connect(
     host=mysql_host,
     user=mysql_username,
     db=mysql_database,
     charset="utf8"
-)
-
-c = db.cursor()
+    )
+    return db, db.cursor()
 
 # detect QNA node
 def qna_detect(title):
     question_marks = set([u'?', u'？'])
+    questions = set([u'为什么', u'如何'])
+    for i in questions:
+        if title.find(i) > -1:
+            return True
     return title.strip()[-1] in question_marks or title.strip()[0] == u'求'
 
 #detect share node
@@ -39,13 +45,19 @@ def city_detect(title):
 def insert_nodes(topic_id, nodes):
     for node_id in nodes:
         try:
-            c.execute(
+            db.query(
                 'INSERT INTO topics_nodes(topic_id, node_id) VALUES(%s,%s)'
                 % (topic_id, node_id)
             )
+            db.commit()
         except Exception, e:
-            print e
-    db.commit()
+            print 'insert error', e
+
+def delete_nodes(topic_id):
+    try:
+        db.query('DELETE FROM topics_nodes WHERE topic_id = %s' % topic_id)
+    except:
+        pass
 
 def overall_detect(topic_id, title):
     nodes = set()

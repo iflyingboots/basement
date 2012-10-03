@@ -122,8 +122,8 @@ class Nodes(db.Model):
     active = db.Column(db.Integer())
     ctime = db.Column(db.DateTime())
     topic_num = db.Column(db.Integer())
-    # topics = db.relationship('Topics', secondary=Topics_nodes, 
-    #     backref=db.backref('node', lazy='dynamic'))
+    topics = db.relationship('Topics', secondary=Topics_nodes, 
+        backref=db.backref('node', lazy='dynamic'))
 
     def __unicode__(self):
         return self.value
@@ -298,6 +298,7 @@ def topic_delete(topic_id):
     topic = Topics.query.filter_by(id=topic_id).first_or_404()
     if current_user.id != topic.user_id:
         return abort(404)
+    delete_nodes(topic_id)
     db.session.delete(topic)
     db.session.commit()
     flash('Topic has been deleted!', 'success')
@@ -314,6 +315,7 @@ def topic_edit(topic_id):
     if form.validate_on_submit():
         topic.title = request.form['title']
         topic.contents = request.form['contents']
+        delete_nodes(topic.id)
         overall_detect(topic.id, topic.title)
         db.session.commit()
         flash('You have edited the topic', 'success')
@@ -453,6 +455,13 @@ def u(username):
     user = Users.query.filter_by(username=username).first_or_404()
     return render_template('u.html', **locals())
 
+@app.route('/node/<value>', methods=['GET'])
+def node(value):
+    b = browser(request)
+    node = Nodes.query.filter_by(url=value).first_or_404()
+    return render_template('node.html', **locals())
+
+
 @app.route('/notifications', methods=['GET'])
 @login_required
 @cache.cached(timeout=60)
@@ -469,17 +478,11 @@ def mark_notifications():
     db.session.commit()
     return 'Marked all notifications as read!'
 
-def mark_one(nid):
-    notis = Notifications.query.filter_by(id=nid, read=0).first()
-    if notis:
-        notis.read = 1
-        db.session.commit()
-
 @app.route('/page/<page>', methods=['GET'])
 @cache.cached(timeout=6000)
 def page(page):
     b = browser(request)
-    return render_template('/page/%s.html' % page)
+    return render_template('/page/%s.html' % page, **locals())
 
 @app.route('/favicon.ico', methods=['GET'])
 def favicon():
@@ -516,6 +519,12 @@ def send_mention(html, sender_id, topic_id):
                 )
     except:
         pass
+
+def mark_one(nid):
+    notis = Notifications.query.filter_by(id=nid, read=0).first()
+    if notis:
+        notis.read = 1
+        db.session.commit()
 
 @app.template_filter()
 def mention(value):

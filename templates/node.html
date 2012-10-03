@@ -1,0 +1,67 @@
+{% extends "layout.html" %}
+{% block title %} {{node.value}}{%endblock%}
+{% block body %}
+  <div class="row index-view node-view">
+    <div class="span8">
+    <table class="home-entries">
+      <tbody>
+      {% for topic in node.topics | reverse %}
+      <!-- entry -->
+      <tr>
+        <td class="entries-photo">
+         <a href="/u/{{topic.user.username}}">
+          {% if b == 'web' %}
+          <img src="{{ topic.user | avatar(50) }}" alt="{{topic.user.username}}" class="photo-round" />
+          {% else %}
+          <img src="{{ topic.user | avatar(25)}}" alt="{{topic.user.username}}" class="photo-round" />
+          {% endif %}
+        </a>
+        </td>
+        <td class="entries-title">
+        <div class="inner airmail-box">
+          <h4 class="title"><a href="/topic/{{topic.id}}">{{ topic.title }}</a></h4>
+          <span class="badge replies-num"><a href="/topic/{{topic.id}}#reply_{{topic.count_comments()}}">{{topic.count_comments()}}</a></span>
+          <div class="clearfix"></div>
+          <div class="meta">
+            <span class="info">
+              {{topic.user.username}} / {{topic.ctime | timesince}} / {{topic.visits}} visits  
+            </span>
+
+          {% if topic.nodes %}
+            {% for node in topic.nodes%}
+            <span class="label"><a href="/node/{{node.url}}">{{node.value}}</a></span>
+            {% endfor %}
+          {% endif %}
+
+          </div>
+        </div>
+        </td>
+      </tr>
+      <!-- /entry -->
+      {% endfor %}
+      
+      </tbody>
+    </table>
+    
+    </div>
+    <div class="span4 sidebar">
+      <div class="bg-white airmail-box">
+        <h3 class="h3-title">{{node.value}}</h3>
+        <dl>
+          <dt>> Created on: </dt> <dd> {{node.ctime}}</dd>
+          <dt>> Resources Amount: </dt> <dd>{{node.topics | length}}</dd>
+          <dt>> Last Activity: </dt> <dd>{{ node.topics[-1].ctime}}</dd>
+        </dl>
+        
+        
+      </div>
+      
+      <div class="bg-white search">
+        <form class="form-search">
+          <input type="text" class="input-medium search-query">
+          <button type="submit" class="btn">Search</button>
+        </form>
+      </div>  
+    </div>
+  </div>
+{% endblock %}
